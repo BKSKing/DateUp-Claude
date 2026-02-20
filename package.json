@@ -14,7 +14,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "set CI=false && react-scripts build",
+    "build": "CI=false npx react-scripts build",
     "test": "react-scripts test"
   },
   "eslintConfig": {
