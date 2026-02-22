@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../config';
-import { Trash2, Eye, Calendar, Tag, FileText, Image, TrendingUp } from 'lucide-react';
+import { Trash2, Eye, Calendar, Tag, FileText, Image, TrendingUp, Mail, Zap } from 'lucide-react';
 
 const TAG_META = {
   general:   { emoji: '📋', cls: 'tag-general'   },
@@ -38,7 +38,6 @@ export default function AdminInfo({ session, orgData }) {
     if (error) alert('Error: ' + error.message);
     else {
       setNotices(prev => prev.filter(n => n.id !== noticeId));
-      // Decrement count
       if (orgData?.notice_count > 0) {
         await supabase.from('organizations')
           .update({ notice_count: orgData.notice_count - 1 })
@@ -72,7 +71,7 @@ export default function AdminInfo({ session, orgData }) {
       </p>
 
       {/* Stats */}
-      <div className="stats-grid" style={{ marginBottom: 32 }}>
+      <div className="stats-grid" style={{ marginBottom: 24 }}>
         <div className="stat-card">
           <div className="stat-num">{notices.length}</div>
           <div className="stat-label">Total Notices</div>
@@ -87,7 +86,31 @@ export default function AdminInfo({ session, orgData }) {
         </div>
       </div>
 
-      {/* Notices */}
+      {/* Support Card */}
+      <div className="card" style={{ 
+        marginBottom: 32, 
+        padding: '20px', 
+        background: 'rgba(255,255,255,0.03)', 
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: 16,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <div>
+          <h3 style={{ fontSize: 18, marginBottom: 4 }}>Need Help?</h3>
+          <p className="text-sm text-muted">
+            {orgData?.subscription_plan === 'professional' 
+              ? '🚀 Priority support - 2hr response time' 
+              : '📧 Email support - 24-48hr response'}
+          </p>
+        </div>
+        <button className="btn btn-primary" onClick={() => window.location.href = 'mailto:support@example.com'}>
+          Contact Support
+        </button>
+      </div>
+
+      {/* Notices List */}
       {notices.length === 0 ? (
         <div className="empty-state">
           <FileText size={48} />
@@ -120,12 +143,7 @@ export default function AdminInfo({ session, orgData }) {
                   <img
                     src={notice.image_url}
                     alt=""
-                    style={{
-                      width: 72, height: 72,
-                      objectFit: 'cover',
-                      borderRadius: 10,
-                      flexShrink: 0
-                    }}
+                    style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 10, flexShrink: 0 }}
                   />
                 ) : (
                   <div style={{
@@ -133,10 +151,7 @@ export default function AdminInfo({ session, orgData }) {
                     background: 'rgba(255,107,43,0.1)',
                     border: '1px solid rgba(255,107,43,0.2)',
                     borderRadius: 10,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
                   }}>
                     <FileText color="var(--orange)" size={28} />
                   </div>
@@ -147,56 +162,29 @@ export default function AdminInfo({ session, orgData }) {
                   <div className="flex-row" style={{ gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
                     <span className={`tag ${meta.cls}`}>{meta.emoji} {notice.tag}</span>
                     <span style={{
-                      fontSize: 12,
-                      color: 'var(--gray-400)',
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      borderRadius: 100,
-                      padding: '2px 10px'
+                      fontSize: 12, color: 'var(--gray-400)', background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.08)', borderRadius: 100, padding: '2px 10px'
                     }}>
                       👥 {groupName}
                     </span>
-                    {notice.pdf_url && (
-                      <span style={{
-                        fontSize: 12,
-                        color: '#F6AD55',
-                        background: 'rgba(246,173,85,0.1)',
-                        border: '1px solid rgba(246,173,85,0.2)',
-                        borderRadius: 100,
-                        padding: '2px 10px'
-                      }}>
-                        📎 PDF
-                      </span>
-                    )}
                   </div>
 
-                  <div className="text-head" style={{ fontSize: 16, marginBottom: 6 }}>
-                    {notice.title}
-                  </div>
+                  <div className="text-head" style={{ fontSize: 16, marginBottom: 6 }}>{notice.title}</div>
                   <p className="text-sm text-muted" style={{
-                    lineHeight: 1.6,
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden'
+                    lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden'
                   }}>
                     {notice.description}
                   </p>
 
                   <div className="notice-meta" style={{ marginTop: 12 }}>
-                    <span>
-                      <Eye size={13} /> {notice.views || 0} views
-                    </span>
+                    <span><Eye size={13} /> {notice.views || 0} views</span>
                     <span>
                       <Calendar size={13} />
-                      {new Date(notice.created_at).toLocaleDateString('en-IN', {
-                        day: 'numeric', month: 'short', year: 'numeric'
-                      })}
+                      {new Date(notice.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </span>
                   </div>
                 </div>
 
-                {/* Delete */}
                 <button
                   className="btn btn-danger"
                   onClick={() => handleDelete(notice.id)}
@@ -213,3 +201,4 @@ export default function AdminInfo({ session, orgData }) {
     </div>
   );
 }
+

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase, uploadToCloudinary } from '../config';
-import { Upload, FileText, Image, Send, AlertCircle } from 'lucide-react';
+import { Upload, FileText, Image, Send, Calendar } from 'lucide-react';
 
 const TAGS = [
   { value: 'general',   label: 'General',   emoji: '📋' },
@@ -14,6 +14,7 @@ export default function NoticeCreate({ session, orgData, refreshOrg }) {
   const [description, setDescription]   = useState('');
   const [selectedGroup, setSelectedGroup] = useState('');
   const [tag, setTag]                   = useState('general');
+  const [scheduledFor, setScheduledFor] = useState(''); // New State
   const [imageFile, setImageFile]       = useState(null);
   const [pdfFile, setPdfFile]           = useState(null);
   const [uploading, setUploading]       = useState(false);
@@ -37,16 +38,18 @@ export default function NoticeCreate({ session, orgData, refreshOrg }) {
       if (pdfFile)   pdfUrl   = await uploadToCloudinary(pdfFile);
 
       const { error } = await supabase.from('notices').insert({
-        org_id:    session.user.id,
-        org_name:  orgData.name,
-        group_id:  selectedGroup,
+        org_id:        session.user.id,
+        org_name:      orgData.name,
+        group_id:      selectedGroup,
         title,
         description,
         tag,
-        image_url: imageUrl,
-        pdf_url:   pdfUrl,
-        views:     0,
+        image_url:     imageUrl,
+        pdf_url:       pdfUrl,
+        scheduled_for: scheduledFor || null, // Added to Supabase
+        views:         0,
       });
+
       if (error) throw error;
 
       // Increment notice count
@@ -54,10 +57,12 @@ export default function NoticeCreate({ session, orgData, refreshOrg }) {
         .update({ notice_count: quota + 1 })
         .eq('id', session.user.id);
 
+      // Reset Form
       setTitle('');
       setDescription('');
       setSelectedGroup('');
       setTag('general');
+      setScheduledFor('');
       setImageFile(null);
       setPdfFile(null);
       setSuccess(true);
@@ -76,7 +81,7 @@ export default function NoticeCreate({ session, orgData, refreshOrg }) {
         Publish a notice to your group members
       </p>
 
-      {/* Quota */}
+      {/* Quota Section */}
       <div style={{
         background: 'rgba(255,255,255,0.04)',
         border: '1px solid rgba(255,255,255,0.08)',
@@ -159,11 +164,6 @@ export default function NoticeCreate({ session, orgData, refreshOrg }) {
                 <option key={g.id} value={g.id}>{g.name}</option>
               ))}
             </select>
-            {(!orgData?.groups || orgData.groups.length === 0) && (
-              <p className="text-xs text-muted" style={{ marginTop: 6 }}>
-                No groups yet. Create groups in "Manage Groups" tab.
-              </p>
-            )}
           </div>
 
           <div>
@@ -182,9 +182,26 @@ export default function NoticeCreate({ session, orgData, refreshOrg }) {
           </div>
         </div>
 
+        {/* Schedule Notice (New Field) */}
+        <div style={{ marginBottom: 20 }}>
+          <label className="input-label">Schedule Notice (Optional)</label>
+          <div style={{ position: 'relative' }}>
+            <input
+              className="input"
+              type="datetime-local"
+              value={scheduledFor}
+              onChange={(e) => setScheduledFor(e.target.value)}
+              style={{ paddingLeft: '40px' }}
+            />
+            <Calendar size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
+          </div>
+          <p className="text-xs text-muted" style={{ marginTop: 6 }}>
+            Leave blank to publish immediately.
+          </p>
+        </div>
+
         {/* Uploads */}
         <div className="grid-2" style={{ marginBottom: 28 }}>
-          {/* Image */}
           <div>
             <label className="input-label">Image (optional)</label>
             <label className={`upload-zone${imageFile ? ' has-file' : ''}`}>
@@ -198,11 +215,9 @@ export default function NoticeCreate({ session, orgData, refreshOrg }) {
               <div style={{ marginTop: 8, fontSize: 13, fontWeight: 500 }}>
                 {imageFile ? `✓ ${imageFile.name}` : 'Click to upload image'}
               </div>
-              <div className="text-xs text-muted" style={{ marginTop: 4 }}>JPG, PNG, WEBP</div>
             </label>
           </div>
 
-          {/* PDF */}
           <div>
             <label className="input-label">PDF (optional)</label>
             <label className={`upload-zone${pdfFile ? ' has-file' : ''}`}>
@@ -216,7 +231,6 @@ export default function NoticeCreate({ session, orgData, refreshOrg }) {
               <div style={{ marginTop: 8, fontSize: 13, fontWeight: 500 }}>
                 {pdfFile ? `✓ ${pdfFile.name}` : 'Click to upload PDF'}
               </div>
-              <div className="text-xs text-muted" style={{ marginTop: 4 }}>PDF only</div>
             </label>
           </div>
         </div>
@@ -234,3 +248,4 @@ export default function NoticeCreate({ session, orgData, refreshOrg }) {
     </div>
   );
 }
+

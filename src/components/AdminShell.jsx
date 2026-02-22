@@ -35,6 +35,19 @@ export default function AdminShell({ session, onSwitchToViewer }) {
     setLoadingOrg(false);
   };
 
+  // --- SSO LOGIC ---
+  const handleSSOLogin = async (provider) => {
+    setAuthLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: provider, // 'google' | 'azure' | 'github'
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
+    });
+    if (error) setAuthError(error.message);
+    setAuthLoading(false);
+  };
+
   const handleAuth = async (e) => {
     e.preventDefault();
     setAuthError('');
@@ -156,6 +169,40 @@ export default function AdminShell({ session, onSwitchToViewer }) {
             </button>
           </form>
 
+          {/* --- SSO BUTTONS SECTION --- */}
+          <div style={{ margin: '20px 0', textAlign: 'center', position: 'relative' }}>
+             <hr style={{ opacity: 0.1 }} />
+             <span style={{ 
+               position: 'absolute', 
+               top: '50%', 
+               left: '50%', 
+               transform: 'translate(-50%, -50%)',
+               background: 'var(--glass-bg)',
+               padding: '0 10px',
+               fontSize: 12,
+               color: 'var(--text-muted)'
+             }}>OR</span>
+          </div>
+
+          <div className="flex-col" style={{ gap: 10 }}>
+            <button 
+              className="btn btn-secondary btn-full" 
+              onClick={() => handleSSOLogin('google')}
+              disabled={authLoading}
+            >
+              <img src="https://www.google.com" style={{ width: 14, marginRight: 8 }} alt=""/>
+              Continue with Google
+            </button>
+            <button 
+              className="btn btn-secondary btn-full" 
+              onClick={() => handleSSOLogin('azure')}
+              disabled={authLoading}
+            >
+              <img src="https://microsoft.com" style={{ width: 14, marginRight: 8 }} alt=""/>
+              Continue with Microsoft
+            </button>
+          </div>
+
           <hr className="divider" />
           <button
             className="btn btn-secondary btn-full"
@@ -250,3 +297,4 @@ export default function AdminShell({ session, onSwitchToViewer }) {
     </div>
   );
 }
+
